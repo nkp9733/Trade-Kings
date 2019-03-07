@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang = "en" >
+<head>
+<meta charset = "utf-8" >
+<meta name = "viewport" content= "width=device-width, initial-scale=1" >
+<style>
+	form.example input[type=text] {
+ 		padding: 10px;
+  		font-size: 14px;
+  		border: 1px solid grey;
+  		float: left;
+  		width: 25%;
+  		background: #f1f1f1;	   
+	}
+
+	/* Style the submit button */
+	form.example button {
+		float: left;
+		width: 5%;
+		padding: 10px;
+		background: #2196F3;
+		color: white;
+		font-size: 14px;
+		border: 1px solid grey;
+		border-left: none; /* Prevent double borders */
+		cursor: pointer;  
+	}
+
+	form.example button:hover {
+		background: #0b7dda;
+	}
+
+	form.example::after {
+  		content: "";
+  		clear: both;
+  		display: table;
+	}	
+
+</style>
+
+
+<script src="plotly-latest.min.js"></script>
+</head>
+<body>
+	<div class="research">
+		<form class="example" onsubmit="myFunction();return false">
+			<input type="text" id="myInput" name="search" placeholder="Search Stocks by Ticker..">
+			<button type="submit"><i class="fa fa-search"></i></button>
+		</form>
+	</div>
+	<div id="5y" class="tabcontent"></div>
+
+<script>
+	
+	var filter;
+	function myFunction(){
+    	//document.getElementById("loader").style.display = "block";
+    	mySearch();
+	}
+
+	function mySearch(){
+
+		var input;
+    	input = document.getElementById('myInput');
+    	filter = input.value.toLowerCase();
+		
+		const url5y = 'https://api.iextrading.com/1.0/stock/'+ filter +'/chart/5y';
+
+		requestFile(url5y);
+	}
+
+	function requestFile(url5y){
+		
+		const xhr5y = new XMLHttpRequest();
+		xhr5y.open( 'GET', url5y, true );
+		xhr5y.onerror = function( xhr5y ) { console.log( 'error:', xhr5y  ); };
+		xhr5y.onprogress = function( xhr5y ) { console.log( 'bytes loaded:', xhr5y.loaded  ); }; /// or something
+		xhr5y.onload = get5y;
+		xhr5y.send( null );
+	}
+
+	function get5y(xhr5y){
+
+		let response, json;
+
+		response = xhr5y.target.response;
+		json = JSON.parse( response );
+		console.log('5 Year Data', json );
+
+		values=[];
+		xaxis=[];
+		var i = 0;
+		var currentYear = "2018"
+		//Store stock data into array
+		for (x in json) { 
+			if(json[i]["date"].substring(0,4).localeCompare(currentYear) === 0)
+				break;
+	    	values.push(Number(json[i]["close"]));
+	    	dates.push(json[i]["date"]);
+	    	i = i+1;
+		}
+		console.log('5y', values);
+		console.log('Dates', dates);
+		
+
+		//Set trace parameters
+		var trace1 = {
+	  		type: "scatter",
+	  		mode: "lines",
+	  		name: 'Close',
+	  		x: dates,
+	  		y: values,
+	  		line: {color: '#17BECF'}
+		}
+
+		//Set graph data
+		var data = [trace1];
+
+		//Set graph layout: title
+		var layout = {
+			title: '5 Years',
+			xaxis: {title: 'Time'},
+			yaxis: {title: 'Price (USD)'},
+		}
+
+		//Create plot at div element with specified data and layout
+		var d = document.getElementById('5y');
+		
+		Plotly.newPlot(d,data,layout);
+		d.style.display = "block";
+	}
+</script>
+</body>
+</html>
